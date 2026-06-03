@@ -138,9 +138,36 @@ python data_prep.py --pkl LSWMD.pkl --img-size 64
 - 모든 실험은 동일한 전처리 데이터(`wm811k_64.npz`)와 동일 학습 설정(30 epoch, batch 128, SGD + Cosine Annealing)으로 통일
 - 평가 지표: Accuracy, Macro-F1, 소수 클래스(Near-full / Donut / Random / Scratch) 평균 F1
 
+## 추가 실험 (Step 5)
+
+기존 실험에서 다루지 않은 케이스를 보완했다. Tesla P100-PCIE-16GB 환경에서 `run_all.py`로 실행한 결과.
+
+### Temperature 곡선 보완 (T=3, T=10 추가)
+
+| T | Macro-F1 | 소수 평균 F1 | Near-full F1 |
+|---|---|---|---|
+| 1 | 0.8554 | 0.8231 | 0.885 |
+| **3** | **0.8675** | **0.8515** | **0.921** |
+| 5 | 0.8679 | 0.8431 | 0.892 |
+| **10** | **0.8635** | **0.8318** | **0.875** |
+| 20 | 0.8686 | 0.8466 | 0.951 |
+
+T=3·T=10을 추가해 곡선이 T=5 근방에서 정점을 이루고 T=10 이후 완만히 감소하는 형태임을 확인했다. (그림: `fig4_updated.png`)
+
+### 시너지 케이스 확장
+
+| 조합 | Macro-F1 | 소수 평균 F1 | KD 단독 대비 |
+|---|---|---|---|
+| oversample + KD (T=5) | 0.8654 | 0.8505 | −0.003 |
+| **classweight + KD (T=1)** | **0.8690** | **0.8479** | +0.014 ✅ |
+
+- **oversample + KD**: oversample 단독(0.8360)에서 +0.029 상승했으나 KD 단독(0.8679)에는 미치지 못했다.
+- **classweight + KD (T=1)**: classweight+KD(T=5)가 KD 단독 대비 상쇄를 보인 반면, T=1에서는 시너지가 관찰됐다. T=1은 soft label 비중을 최소화해 classweight의 재가중 신호와 충돌하지 않기 때문으로 해석된다. (그림: `fig10_step5_synergy.png`)
+
 ## 결론
 
 1. 충분한 학습이 가능한 환경에서 **클래스 불균형 처리는 전체 성능을 보장하지 않으며**, 극소수 클래스를 선택적으로 개선하는 trade-off를 가진다.
 2. **Knowledge Distillation은 경량 모델의 성능을 안정적으로 끌어올린다.** 단, Temperature·α에 민감하고 Teacher 크기에는 둔감하다.
 3. **두 기법의 시너지는 조합에 따라 달라진다.** class weight + KD는 상승 시너지를, focal + KD는 상쇄를 보였다. → 불균형 기법과 KD의 메커니즘이 겹치는지 보완적인지가 시너지를 좌우한다.
 4. 최종 권장 구성: **class weight + KD** (Macro-F1 0.8744, 소수 클래스 평균 F1 0.8567).
+5. **(추가)** classweight+KD는 T=1(hard label 위주)에서도 시너지(Macro-F1 0.8690)를 내며, soft label과 classweight 재가중 신호의 상호작용이 T 값 선택에 민감함을 보였다.
