@@ -1,0 +1,11 @@
+# Large data / model artifacts (download WM-811K from Kaggle)
+LSWMD.pkl
+archive.zip
+*.npz
+*.pt
+checkpoints/
+# Local tooling / OS
+__pycache__/
+.omc/
+.claude/
+.DS_Store

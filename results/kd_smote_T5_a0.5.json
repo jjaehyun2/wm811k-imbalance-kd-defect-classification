@@ -1,0 +1,18 @@
+{
+  "skipped": true,
+  "macro_f1": 0.0,
+  "minority_f1": 0.0,
+  "accuracy": 0.0,
+  "per_class_f1": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "note": "SMOTE skipped - dataset too large (1M+ samples)"
+}
